@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander';
 import pkg from './package.json' assert { type: 'json' };
 import path from 'path';

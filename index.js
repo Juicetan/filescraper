@@ -3,7 +3,13 @@ import pkg from './package.json' assert { type: 'json' };
 import path from 'path';
 
 import { listFiles } from './app/controllers/fileSearcher.js';
-import { extractFiles } from './app/controllers/urldownloader.js';
+import { extractFiles, replaceHostURLs } from './app/controllers/urldownloader.js';
+
+const URLIGNORELIST = [
+  'googleapis', 'eventbrite.ca', '.p12', 'signin', 'myonline', 
+  'personal/borrow', 'about-us', 'ask-us', 'contact-us', 'and-locations',
+  'google.ca'
+];
 
 const processRootPath = async (pathStr) => {
   const rootPath = path.resolve(pathStr);
@@ -14,11 +20,13 @@ const processRootPath = async (pathStr) => {
   const options = program.opts();
   const downloadPath = options.directory ? path.resolve(options.directory) : path.resolve('./');
 
-  await extractFiles(files, downloadPath, [
-    'googleapis', 'eventbrite.ca', '.p12', 'signin', 'myonline', 
-    'personal/borrow', 'about-us', 'ask-us', 'contact-us', 'and-locations',
-    'google.ca'
-  ]);
+  if(options.replaceHost){
+    console.log('> replacing host URLs with:', options.replaceHost);
+    replaceHostURLs(files, options.replaceHost, URLIGNORELIST)
+  } else{
+    console.log('> extracting URLs from files');
+    await extractFiles(files, downloadPath, URLIGNORELIST);
+  }
 }
 
 const program = new Command();
@@ -28,6 +36,7 @@ program
   .version(pkg.version)
   .argument('<rootPath>', 'Root directory to being scanning files')
   .option('-d, --directory <path>', 'Destination directory to place downloaded files')
+  .option('-r, --replace-host <hostname>', 'Replaces host URLs in files with provided hostname string')
   .action((rootPath) => {
     processRootPath(rootPath);
   });
